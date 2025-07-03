@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useAccount } from 'wagmi'
 import { ResultCard } from '../components/home/_components/result-card'
 import { useWishlist } from '../components/home/_components/wishlist-hooks'
-import { StoreIcon, PackageIcon, SearchIcon, WalletIcon } from '../components/home/_components/icons'
+import { StoreIcon, PackageIcon, WalletIcon } from '../components/home/_components/icons'
 import { ConnectWallet } from '@coinbase/onchainkit/wallet'
 import { SearchResult } from '../components/home/_components/types'
 
@@ -200,16 +200,9 @@ export default function WishlistPage() {
                                 No {activeTab} saved yet
                             </h3>
                             <p className="text-sm text-[var(--ock-text-foreground-muted)] max-w-sm mx-auto">
-                                Start exploring and save your favorite {activeTab} to see them here.
+                                Your wishlist is empty. Save your favorite {activeTab} to see them here.
                             </p>
                         </div>
-                        <button
-                            onClick={() => window.history.back()}
-                            className="inline-flex items-center space-x-2 px-4 py-2 bg-[var(--ock-accent)] text-white rounded-lg hover:bg-[var(--ock-accent)]/90 transition-colors"
-                        >
-                            <SearchIcon className="w-4 h-4" />
-                            <span>Start Exploring</span>
-                        </button>
                     </div>
                 )}
             </div>

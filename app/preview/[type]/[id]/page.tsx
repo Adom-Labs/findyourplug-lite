@@ -3,108 +3,109 @@
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { useWishlist } from '../../../components/home/_components/wishlist-hooks'
-import { StoreIcon, PackageIcon, StarIcon, LocationIcon, VerifiedIcon, HeartIcon, ShareIcon, ArrowLeftIcon } from '../../../components/home/_components/icons'
+import { useAccount } from 'wagmi'
+import { useWishlist, useWishlistIds } from '../../../components/home/_components/wishlist-hooks'
+import { PackageIcon, StarIcon, LocationIcon, VerifiedIcon, HeartIcon, ShareIcon, ArrowLeftIcon } from '../../../components/home/_components/icons'
+import { DIGEMART_API_BASE } from '../../../components/home/_components/api'
 
-// Types for preview items
+// Types for preview items - matching API response
 interface StorePreview {
     id: number
     name: string
     description: string
-    rating: number
-    reviews: number
+    rating?: number
+    reviews?: number
     location: string
     image: string
-    url: string
-    verified: boolean
+    url?: string
+    verified?: boolean
     type: 'store'
-    address: string
-    phone: string
-    email: string
-    hours: string
-    categories: string[]
-    productCount: number
-    followers: number
-    about: string
 }
 
 interface ProductPreview {
     id: number
     name: string
     description: string
-    price: string
-    storeName: string
-    storeUrl: string
-    image: string
-    location: string
+    features?: string
+    price: number
+    inventory: number
+    averageRating?: number
+    totalRatings?: number
+    category: {
+        id: number
+        name: string
+        description: string
+    }
+    tags: Array<{
+        id: number
+        name: string
+    }>
+    images: Array<{
+        id: number
+        url: string
+        isMain: boolean
+    }>
+    storeId: number
     type: 'product'
-    categoryName: string
-    sku: string
-    brand: string
-    inStock: boolean
-    stockCount: number
-    specifications: string[]
-    images: string[]
 }
 
 type PreviewItem = StorePreview | ProductPreview
 
-// Mock API functions - replace with real API calls
+// API functions to fetch real data
 const fetchStoreDetails = async (id: number): Promise<StorePreview> => {
-    // Mock store data - replace with actual API call
-    return {
-        id,
-        name: "Tech Hub Store",
-        description: "Premium electronics and tech accessories with cutting-edge innovation and quality.",
-        rating: 4.8,
-        reviews: 245,
-        location: "San Francisco, CA",
-        image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop",
-        url: "tech-hub-store",
-        verified: true,
-        type: 'store',
-        // Additional store details
-        address: "123 Tech Street, San Francisco, CA 94103",
-        phone: "+1 (555) 123-4567",
-        email: "contact@techhubstore.com",
-        hours: "Mon-Fri: 9AM-8PM, Sat-Sun: 10AM-6PM",
-        categories: ["Electronics", "Tech Accessories", "Gadgets"],
-        productCount: 156,
-        followers: 1200,
-        about: "Tech Hub Store has been serving the San Francisco community for over 10 years, providing the latest in technology and electronics. We pride ourselves on expert knowledge, competitive prices, and excellent customer service."
+    try {
+        const response = await fetch(`${DIGEMART_API_BASE}/stores/${id}`)
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const data = await response.json()
+        const store = data.data
+
+        return {
+            id: store.id,
+            name: store.storeName,
+            description: store.storeDescription || '',
+            rating: store.averageRating,
+            reviews: store.totalRatings,
+            location: `${store.storeAddress}, ${store.storeLocationCity}, ${store.storeLocationState}`,
+            image: store.logo || store.storeCoverPhoto || '',
+            url: store.storeUrl,
+            verified: store.verified || false,
+            type: 'store'
+        }
+    } catch (error) {
+        console.error('Error fetching store details:', error)
+        throw error
     }
 }
 
 const fetchProductDetails = async (id: number): Promise<ProductPreview> => {
-    // Mock product data - replace with actual API call
-    return {
-        id,
-        name: "Premium Wireless Headphones",
-        description: "High-quality wireless headphones with noise cancellation and premium sound quality.",
-        price: "$299.99",
-        storeName: "Tech Hub Store",
-        storeUrl: "tech-hub-store",
-        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop",
-        location: "San Francisco, CA",
-        type: 'product',
-        categoryName: "Electronics",
-        // Additional product details
-        sku: "WH-1000XM4",
-        brand: "Sony",
-        inStock: true,
-        stockCount: 15,
-        specifications: [
-            "Active Noise Cancellation",
-            "30-hour battery life",
-            "Quick charge: 10 min = 5 hours",
-            "Bluetooth 5.0",
-            "Touch controls"
-        ],
-        images: [
-            "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop",
-            "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400&h=300&fit=crop",
-            "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=300&fit=crop"
-        ]
+    try {
+        const response = await fetch(`${DIGEMART_API_BASE}/products/${id}`)
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const data = await response.json()
+        const product = data.data
+
+        return {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            features: product.features,
+            price: product.price,
+            inventory: product.inventory,
+            averageRating: product.averageRating,
+            totalRatings: product.totalRatings,
+            category: product.category,
+            tags: product.tags || [],
+            images: product.images || [],
+            storeId: product.storeId,
+            type: 'product'
+        }
+    } catch (error) {
+        console.error('Error fetching product details:', error)
+        throw error
     }
 }
 
@@ -115,7 +116,9 @@ export default function PreviewPage() {
 
     const type = params.type as 'store' | 'product'
     const id = parseInt(params.id as string)
-    const { isInWishlist, addToWishlist, removeFromWishlist, isAdding, isRemoving } = useWishlist()
+    const { address } = useAccount()
+    const { addToWishlist, removeFromWishlist, isAdding, isRemoving } = useWishlist(address)
+    const { isInWishlist } = useWishlistIds()
 
     // Fetch item details
     const { data: item, isLoading, error } = useQuery<PreviewItem>({
@@ -139,16 +142,50 @@ export default function PreviewPage() {
             if (inWishlist) {
                 await removeFromWishlist(item.id, item.type)
             } else {
-                await addToWishlist(item, item.type)
+                // Convert to the format expected by addToWishlist
+                const wishlistItem = item.type === 'store'
+                    ? {
+                        id: item.id,
+                        name: item.name,
+                        description: item.description,
+                        image: item.image,
+                        location: item.location,
+                        rating: (item as StorePreview).rating || 0,
+                        reviews: (item as StorePreview).reviews || 0,
+                        url: (item as StorePreview).url || '',
+                        verified: (item as StorePreview).verified || false
+                    }
+                    : {
+                        id: item.id,
+                        name: item.name,
+                        description: item.description,
+                        image: (item as ProductPreview).images?.[0]?.url || '',
+                        location: '',
+                        price: `$${(item as ProductPreview).price}`,
+                        storeName: '',
+                        storeUrl: '',
+                        categoryName: (item as ProductPreview).category?.name || ''
+                    }
+                await addToWishlist(wishlistItem as any, item.type)
             }
         } catch (error) {
             console.error('Error toggling wishlist:', error)
         }
     }
 
+    // Get main image for display
+    const getMainImage = (item: PreviewItem): string => {
+        if (item.type === 'store') {
+            return item.image || ''
+        } else {
+            const mainImage = item.images.find(img => img.isMain)
+            return mainImage?.url || item.images[0]?.url || ''
+        }
+    }
+
     if (isLoading) {
         return (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full max-w-md mx-auto px-4 py-3">
                 <div className="h-64 bg-[var(--ock-bg-alternate)] rounded-xl animate-pulse"></div>
                 <div className="space-y-3">
                     <div className="h-6 bg-[var(--ock-bg-alternate)] rounded animate-pulse"></div>
@@ -161,15 +198,15 @@ export default function PreviewPage() {
 
     if (error || !item) {
         return (
-            <div className="text-center py-12 space-y-4">
+            <div className="text-center py-12 space-y-4 w-full max-w-md mx-auto px-4 py-3">
                 <div className="w-20 h-20 mx-auto bg-[var(--ock-bg-alternate)] rounded-full flex items-center justify-center">
                     <PackageIcon className="w-10 h-10 text-[var(--ock-text-foreground-muted)]" />
                 </div>
                 <div className="space-y-2">
-                    <h3 className="text-lg font-medium text-[var(--ock-text-foreground)]">
+                    <h3 className="text-lg font-medium text-white">
                         Item not found
                     </h3>
-                    <p className="text-sm text-[var(--ock-text-foreground-muted)]">
+                    <p className="text-sm text-gray-300">
                         The {type} you&apos;re looking for doesn&apos;t exist or has been removed.
                     </p>
                 </div>
@@ -187,12 +224,12 @@ export default function PreviewPage() {
     const isStore = type === 'store'
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full max-w-md mx-auto px-4 py-3">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <button
                     onClick={() => router.back()}
-                    className="flex items-center space-x-2 text-[var(--ock-text-foreground-muted)] hover:text-[var(--ock-text-foreground)] transition-colors"
+                    className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
                 >
                     <ArrowLeftIcon className="w-5 h-5" />
                     <span className="text-sm">Back</span>
@@ -204,7 +241,7 @@ export default function PreviewPage() {
                         disabled={isAdding || isRemoving}
                         className={`p-2 rounded-full transition-colors ${inWishlist
                             ? 'bg-red-500 text-white'
-                            : 'bg-[var(--ock-bg-alternate)] text-[var(--ock-text-foreground-muted)] hover:bg-red-50 hover:text-red-500'
+                            : 'bg-[var(--ock-bg-alternate)] text-gray-400 hover:bg-red-50 hover:text-red-500'
                             }`}
                         title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
                     >
@@ -212,7 +249,7 @@ export default function PreviewPage() {
                     </button>
 
                     <button
-                        className="p-2 bg-[var(--ock-bg-alternate)] text-[var(--ock-text-foreground-muted)] rounded-full hover:bg-[var(--ock-bg-default)] transition-colors"
+                        className="p-2 bg-[var(--ock-bg-alternate)] text-gray-400 rounded-full hover:bg-[var(--ock-bg-default)] hover:text-gray-300 transition-colors"
                         title="Share"
                     >
                         <ShareIcon className="w-5 h-5" />
@@ -224,7 +261,7 @@ export default function PreviewPage() {
             <div className="space-y-3">
                 <div className="aspect-video bg-[var(--ock-bg-alternate)] rounded-xl overflow-hidden">
                     <img
-                        src={isStore ? item.image : (item.type === 'product' ? (item.images?.[currentImageIndex] || item.image) : item.image)}
+                        src={getMainImage(item)}
                         alt={item.name}
                         className="w-full h-full object-cover"
                     />
@@ -232,16 +269,16 @@ export default function PreviewPage() {
 
                 {!isStore && item.type === 'product' && item.images && item.images.length > 1 && (
                     <div className="flex space-x-2 overflow-x-auto pb-2">
-                        {item.images.map((img: string, index: number) => (
+                        {item.images.map((img, index: number) => (
                             <button
-                                key={index}
+                                key={img.id}
                                 onClick={() => setCurrentImageIndex(index)}
                                 className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${currentImageIndex === index
                                     ? 'border-[var(--ock-accent)]'
                                     : 'border-transparent'
                                     }`}
                             >
-                                <img src={img} alt={`${item.name} ${index + 1}`} className="w-full h-full object-cover" />
+                                <img src={img.url} alt={`${item.name} ${index + 1}`} className="w-full h-full object-cover" />
                             </button>
                         ))}
                     </div>
@@ -253,7 +290,7 @@ export default function PreviewPage() {
                 {/* Title & Basic Info */}
                 <div className="space-y-2">
                     <div className="flex items-start justify-between">
-                        <h1 className="text-xl font-bold text-[var(--ock-text-foreground)]">
+                        <h1 className="text-xl font-bold text-white">
                             {item.name}
                         </h1>
                         {isStore && item.type === 'store' && item.verified && (
@@ -261,25 +298,25 @@ export default function PreviewPage() {
                         )}
                     </div>
 
-                    <p className="text-[var(--ock-text-foreground-muted)]">
+                    <p className="text-gray-300">
                         {item.description}
                     </p>
 
                     {/* Price for products */}
                     {!isStore && item.type === 'product' && (
                         <div className="flex items-center justify-between">
-                            <span className="text-2xl font-bold text-[var(--ock-text-foreground)]">
-                                {item.price}
+                            <span className="text-2xl font-bold text-white">
+                                ${(item as ProductPreview).price}
                             </span>
-                            {item.inStock ? (
-                                <span className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
-                                    In Stock ({item.stockCount} available)
-                                </span>
-                            ) : (
-                                <span className="text-sm text-red-600 bg-red-50 px-2 py-1 rounded">
-                                    Out of Stock
-                                </span>
-                            )}
+                            <span className={`text-sm px-2 py-1 rounded ${(item as ProductPreview).inventory > 0
+                                ? 'text-green-400 bg-green-900/20'
+                                : 'text-red-400 bg-red-900/20'
+                                }`}>
+                                {(item as ProductPreview).inventory > 0
+                                    ? `In Stock (${(item as ProductPreview).inventory} available)`
+                                    : 'Out of Stock'
+                                }
+                            </span>
                         </div>
                     )}
                 </div>
@@ -288,115 +325,69 @@ export default function PreviewPage() {
                 <div className="flex flex-wrap gap-4 py-3 border-y border-[var(--ock-border)]">
                     {isStore ? (
                         <>
+                            {(item as StorePreview).rating && (
+                                <div className="flex items-center space-x-1">
+                                    <StarIcon className="w-4 h-4 text-yellow-500" />
+                                    <span className="text-sm font-medium text-white">{(item as StorePreview).rating}</span>
+                                    <span className="text-sm text-gray-400">
+                                        ({(item as StorePreview).reviews} reviews)
+                                    </span>
+                                </div>
+                            )}
                             <div className="flex items-center space-x-1">
-                                <StarIcon className="w-4 h-4 text-yellow-500" />
-                                <span className="text-sm font-medium">{(item as StorePreview).rating}</span>
-                                <span className="text-sm text-[var(--ock-text-foreground-muted)]">
-                                    ({(item as StorePreview).reviews} reviews)
-                                </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                                <LocationIcon className="w-4 h-4 text-[var(--ock-text-foreground-muted)]" />
-                                <span className="text-sm text-[var(--ock-text-foreground-muted)]">
-                                    {item.location}
-                                </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                                <PackageIcon className="w-4 h-4 text-[var(--ock-text-foreground-muted)]" />
-                                <span className="text-sm text-[var(--ock-text-foreground-muted)]">
-                                    {(item as StorePreview).productCount} products
+                                <LocationIcon className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm text-gray-400">
+                                    {(item as StorePreview).location}
                                 </span>
                             </div>
                         </>
                     ) : (
                         <>
-                            <div className="flex items-center space-x-1">
-                                <StoreIcon className="w-4 h-4 text-[var(--ock-text-foreground-muted)]" />
-                                <span className="text-sm text-[var(--ock-text-foreground-muted)]">
-                                    {(item as ProductPreview).storeName}
-                                </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                                <LocationIcon className="w-4 h-4 text-[var(--ock-text-foreground-muted)]" />
-                                <span className="text-sm text-[var(--ock-text-foreground-muted)]">
-                                    {(item as ProductPreview).location}
-                                </span>
-                            </div>
-                            {(item as ProductPreview).categoryName && (
-                                <span className="text-sm bg-[var(--ock-bg-alternate)] text-[var(--ock-text-foreground-muted)] px-2 py-1 rounded">
-                                    {(item as ProductPreview).categoryName}
-                                </span>
+                            {(item as ProductPreview).averageRating && (
+                                <div className="flex items-center space-x-1">
+                                    <StarIcon className="w-4 h-4 text-yellow-500" />
+                                    <span className="text-sm font-medium text-white">{(item as ProductPreview).averageRating}</span>
+                                    <span className="text-sm text-gray-400">
+                                        ({(item as ProductPreview).totalRatings} ratings)
+                                    </span>
+                                </div>
                             )}
+                            <span className="text-sm bg-[var(--ock-bg-alternate)] text-gray-300 px-2 py-1 rounded">
+                                {(item as ProductPreview).category?.name}
+                            </span>
                         </>
                     )}
                 </div>
 
-                {/* Store-specific details */}
-                {isStore && (
-                    <div className="space-y-4">
-                        <div>
-                            <h3 className="font-semibold text-[var(--ock-text-foreground)] mb-2">About</h3>
-                            <p className="text-sm text-[var(--ock-text-foreground-muted)]">
-                                {(item as StorePreview).about}
-                            </p>
-                        </div>
-
-                        <div>
-                            <h3 className="font-semibold text-[var(--ock-text-foreground)] mb-2">Categories</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {(item as StorePreview).categories.map((category: string, index: number) => (
-                                    <span
-                                        key={index}
-                                        className="text-sm bg-[var(--ock-bg-alternate)] text-[var(--ock-text-foreground-muted)] px-3 py-1 rounded-full"
-                                    >
-                                        {category}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-3 text-sm">
-                            <div>
-                                <span className="font-medium text-[var(--ock-text-foreground)]">Address: </span>
-                                <span className="text-[var(--ock-text-foreground-muted)]">{(item as StorePreview).address}</span>
-                            </div>
-                            <div>
-                                <span className="font-medium text-[var(--ock-text-foreground)]">Hours: </span>
-                                <span className="text-[var(--ock-text-foreground-muted)]">{(item as StorePreview).hours}</span>
-                            </div>
-                            <div>
-                                <span className="font-medium text-[var(--ock-text-foreground)]">Phone: </span>
-                                <span className="text-[var(--ock-text-foreground-muted)]">{(item as StorePreview).phone}</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Product-specific details */}
                 {!isStore && item.type === 'product' && (
                     <div className="space-y-4">
-                        <div>
-                            <h3 className="font-semibold text-[var(--ock-text-foreground)] mb-2">Specifications</h3>
-                            <ul className="space-y-2">
-                                {item.specifications.map((spec, index) => (
-                                    <li key={index} className="flex items-center space-x-2 text-sm">
-                                        <div className="w-1.5 h-1.5 bg-[var(--ock-accent)] rounded-full flex-shrink-0"></div>
-                                        <span className="text-[var(--ock-text-foreground-muted)]">{spec}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        {/* Features */}
+                        {(item as ProductPreview).features && (
+                            <div>
+                                <h3 className="font-semibold text-white mb-2">Features</h3>
+                                <div className="text-sm text-gray-300 whitespace-pre-line">
+                                    {(item as ProductPreview).features}
+                                </div>
+                            </div>
+                        )}
 
-                        <div className="grid grid-cols-2 gap-3 text-sm">
+                        {/* Tags */}
+                        {(item as ProductPreview).tags && (item as ProductPreview).tags.length > 0 && (
                             <div>
-                                <span className="font-medium text-[var(--ock-text-foreground)]">Brand: </span>
-                                <span className="text-[var(--ock-text-foreground-muted)]">{item.brand}</span>
+                                <h3 className="font-semibold text-white mb-2">Tags</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {(item as ProductPreview).tags.map((tag) => (
+                                        <span
+                                            key={tag.id}
+                                            className="text-sm bg-[var(--ock-bg-alternate)] text-gray-300 px-3 py-1 rounded-full"
+                                        >
+                                            {tag.name}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
-                            <div>
-                                <span className="font-medium text-[var(--ock-text-foreground)]">SKU: </span>
-                                <span className="text-[var(--ock-text-foreground-muted)]">{item.sku}</span>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 )}
             </div>

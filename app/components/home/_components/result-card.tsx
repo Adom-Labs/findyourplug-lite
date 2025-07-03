@@ -10,7 +10,7 @@ import {
     HeartIcon,
     LocationIcon
 } from './icons'
-import { useWishlist } from './wishlist-hooks'
+import { useWishlist, useWishlistIds } from './wishlist-hooks'
 import type { SearchResult } from './types'
 
 interface ResultCardProps {
@@ -20,13 +20,14 @@ interface ResultCardProps {
 export function ResultCard({ result }: ResultCardProps) {
     const router = useRouter()
     const { address } = useAccount()
-    const { isInWishlist, addToWishlist, removeFromWishlist, isAdding, isRemoving } = useWishlist(address)
+    const { addToWishlist, removeFromWishlist, isAdding, isRemoving } = useWishlist(address)
+    const { isInWishlist } = useWishlistIds()
 
     const isProduct = result.type === 'product'
     const isStore = result.type === 'store'
     const isCategory = result.type === 'category'
 
-    // Only check wishlist for products and stores
+    // Only check wishlist for products and stores using the global wishlist IDs
     const inWishlist = (isProduct || isStore) ? isInWishlist(result.id, result.type as 'product' | 'store') : false
 
     const handleClick = () => {
@@ -115,10 +116,6 @@ export function ResultCard({ result }: ResultCardProps) {
                                         {result.price}
                                     </span>
                                 </div>
-                                <div className="flex items-center space-x-1 text-xs text-[var(--ock-text-foreground-muted)]">
-                                    <StoreIcon size="sm" />
-                                    <span>{result.storeName}</span>
-                                </div>
                             </>
                         )}
 
@@ -138,7 +135,7 @@ export function ResultCard({ result }: ResultCardProps) {
                         )}
 
                         {/* Location for products and stores */}
-                        {(isProduct || isStore) && (
+                        {(isStore) && (
                             <div className="flex items-center space-x-1 text-xs text-[var(--ock-text-foreground-muted)]">
                                 <LocationIcon size="sm" />
                                 <span>{result.location}</span>
