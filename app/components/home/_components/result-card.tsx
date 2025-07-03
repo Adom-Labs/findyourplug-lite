@@ -1,5 +1,6 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
+import { useAccount } from 'wagmi'
 import {
     StoreIcon,
     PackageIcon,
@@ -18,7 +19,8 @@ interface ResultCardProps {
 
 export function ResultCard({ result }: ResultCardProps) {
     const router = useRouter()
-    const { isInWishlist, addToWishlist, removeFromWishlist, isAdding, isRemoving } = useWishlist()
+    const { address } = useAccount()
+    const { isInWishlist, addToWishlist, removeFromWishlist, isAdding, isRemoving } = useWishlist(address)
 
     const isProduct = result.type === 'product'
     const isStore = result.type === 'store'

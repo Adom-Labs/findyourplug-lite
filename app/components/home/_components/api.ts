@@ -8,7 +8,7 @@ import type {
     DisplayCategory
 } from './types'
 
-const DIGEMART_API_BASE = 'https://api.digemart.com/api'
+export const DIGEMART_API_BASE = 'https://api.digemart.com/api'
 
 // Helper function to format currency
 const formatCurrency = (price: string): string => {

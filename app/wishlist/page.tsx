@@ -1,20 +1,93 @@
 "use client";
 
 import { useState } from 'react'
+import { useAccount } from 'wagmi'
 import { ResultCard } from '../components/home/_components/result-card'
 import { useWishlist } from '../components/home/_components/wishlist-hooks'
-import { StoreIcon, PackageIcon, SearchIcon } from '../components/home/_components/icons'
+import { StoreIcon, PackageIcon, SearchIcon, WalletIcon } from '../components/home/_components/icons'
+import { ConnectWallet } from '@coinbase/onchainkit/wallet'
 import { SearchResult } from '../components/home/_components/types'
 
 export default function WishlistPage() {
     const [activeTab, setActiveTab] = useState<'products' | 'stores'>('products')
-    const { wishlistItems, removeFromWishlist, isLoading } = useWishlist()
+    const { address, isConnected } = useAccount()
+    const { wishlistItems, removeFromWishlist, isLoading, error } = useWishlist(address)
 
     // Filter items by type
     const products = wishlistItems.filter(item => item.type === 'product')
     const stores = wishlistItems.filter(item => item.type === 'store')
 
     const currentItems = activeTab === 'products' ? products : stores
+
+    // If wallet not connected, show connect prompt
+    if (!isConnected) {
+        return (
+            <div className="space-y-4">
+                {/* Header */}
+                <div className="text-center space-y-2">
+                    <h1 className="text-xl font-bold text-[var(--ock-text-foreground)]">
+                        My Wishlist
+                    </h1>
+                    <p className="text-sm text-[var(--ock-text-foreground-muted)]">
+                        Connect your wallet to access your saved items
+                    </p>
+                </div>
+
+                {/* Wallet Connect Prompt */}
+                <div className="text-center py-12 space-y-4">
+                    <div className="w-20 h-20 mx-auto bg-[var(--ock-bg-alternate)] rounded-full flex items-center justify-center">
+                        <WalletIcon className="w-10 h-10 text-[var(--ock-text-foreground-muted)]" />
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="text-lg font-medium text-[var(--ock-text-foreground)]">
+                            Wallet Required
+                        </h3>
+                        <p className="text-sm text-[var(--ock-text-foreground-muted)] max-w-sm mx-auto">
+                            Please connect your wallet to save and access your wishlist across devices
+                        </p>
+                    </div>
+                    <ConnectWallet className="mx-auto">
+                        <div className="inline-flex items-center space-x-2 px-4 py-2 bg-[var(--ock-accent)] text-white rounded-lg hover:bg-[var(--ock-accent)]/90 transition-colors">
+                            <WalletIcon className="w-4 h-4" />
+                            <span>Connect Wallet</span>
+                        </div>
+                    </ConnectWallet>
+                </div>
+            </div>
+        )
+    }
+
+    // If there's an error loading wishlist
+    if (error) {
+        return (
+            <div className="space-y-4">
+                <div className="text-center space-y-2">
+                    <h1 className="text-xl font-bold text-[var(--ock-text-foreground)]">
+                        My Wishlist
+                    </h1>
+                </div>
+                <div className="text-center py-12 space-y-4">
+                    <div className="w-20 h-20 mx-auto bg-red-50 rounded-full flex items-center justify-center">
+                        <PackageIcon className="w-10 h-10 text-red-500" />
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="text-lg font-medium text-[var(--ock-text-foreground)]">
+                            Unable to load wishlist
+                        </h3>
+                        <p className="text-sm text-[var(--ock-text-foreground-muted)] max-w-sm mx-auto">
+                            There was an error loading your wishlist. Please try again.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-[var(--ock-accent)] text-white rounded-lg hover:bg-[var(--ock-accent)]/90 transition-colors"
+                    >
+                        <span>Try Again</span>
+                    </button>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-4">
