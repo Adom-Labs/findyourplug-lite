@@ -124,7 +124,7 @@ export function ResultCard({ result }: ResultCardProps) {
                             <div className="flex items-center space-x-1 text-xs">
                                 <StarIcon size="sm" className="text-yellow-500" />
                                 <span className="font-medium text-[var(--ock-text-foreground)]">
-                                    {result.rating.toFixed(1)}
+                                    {result.rating}
                                 </span>
                                 {result.reviews && (
                                     <span className="text-[var(--ock-text-foreground-muted)]">

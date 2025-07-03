@@ -7,9 +7,9 @@
     "frame": {
         "version": "next",
         "name": "Find Your Plug | Digemart",
-        "iconUrl": "https://findyourplug-lite.vercel.app/favicon.ico",
-        "splashImageUrl": "https://findyourplug-lite.vercel.app/favicon.ico",
+        "iconUrl": "https://minifindyourplug.vercel.app/favicon.ico",
+        "splashImageUrl": "https://minifindyourplug.vercel.app/favicon.ico",
         "splashBackgroundColor": "#000000",
-        "homeUrl": "https://findyourplug-lite.vercel.app"
+        "homeUrl": "https://minifindyourplug.vercel.app"
     }
 }
