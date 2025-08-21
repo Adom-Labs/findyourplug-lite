@@ -12,8 +12,17 @@ import type {
     LinkResponse
 } from './types'
 
-export const DIGEMART_API_BASE = 'https://api.digemart.com/api'
-// export const DIGEMART_API_BASE = 'http://localhost:4402/api'
+// export const DIGEMART_API_BASE = 'https://api.digemart.com/api'
+export const DIGEMART_API_BASE = 'http://localhost:4402/api'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const parseLink = (data: any): string | null => {
+    if (!data) return null;
+    // Support wrapped API responses { status, data: { link } } or direct { link }
+    if (typeof data.link === 'string') return data.link;
+    if (data.data && typeof data.data.link === 'string') return data.data.link;
+    return null;
+};
 
 export async function createGiftCheckout(address: string, payload: GiftCartPayload): Promise<LinkResponse> {
     const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/cart/gift`, {
@@ -22,7 +31,8 @@ export async function createGiftCheckout(address: string, payload: GiftCartPaylo
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`Gift API error: ${res.status}`);
-    return res.json();
+    const data = await res.json();
+    return { link: parseLink(data) || '' };
 }
 
 export async function createPayLink(address: string, payload: PayLinkPayload): Promise<LinkResponse> {
@@ -32,7 +42,8 @@ export async function createPayLink(address: string, payload: PayLinkPayload): P
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`Paylink API error: ${res.status}`);
-    return res.json();
+    const data = await res.json();
+    return { link: parseLink(data) || '' };
 }
 
 export async function createWishlistShare(address: string, payload: ShareWishlistPayload = {}): Promise<LinkResponse> {
@@ -42,7 +53,8 @@ export async function createWishlistShare(address: string, payload: ShareWishlis
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`Wishlist share API error: ${res.status}`);
-    return res.json();
+    const data = await res.json();
+    return { link: parseLink(data) || '' };
 }
 
 // ---------------- Wallet auth helpers ----------------

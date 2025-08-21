@@ -171,4 +171,4 @@ export type ShareWishlistPayload = {
   productIds?: number[];
 };
 
-export type LinkResponse = { link: string };
+export type LinkResponse = { link: string  };
