@@ -52,7 +52,7 @@ export function useCart(walletAddress?: string) {
     const isConnected = Boolean(walletAddress)
 
     const { data: cartItems = [], isLoading, error } = useQuery<CartItem[]>({
-        queryKey: ['cart', walletAddress],
+        queryKey: ['cart'],
         queryFn: async () => readCartFromStorage(),
         staleTime: Infinity,
         gcTime: Infinity,
@@ -77,21 +77,21 @@ export function useCart(walletAddress?: string) {
             return updated
         },
         onMutate: async ({ product, quantity }) => {
-            await queryClient.cancelQueries({ queryKey: ['cart', walletAddress] })
-            const previous = queryClient.getQueryData<CartItem[]>(['cart', walletAddress]) || []
+            await queryClient.cancelQueries({ queryKey: ['cart'] })
+            const previous = queryClient.getQueryData<CartItem[]>(['cart']) || []
             const optimisticItem = toCartItem(product, quantity ?? 1)
             const exists = previous.find(i => i.id === optimisticItem.id && i.type === 'product')
             const optimistic = exists
                 ? previous.map(i => i.id === optimisticItem.id && i.type === 'product' ? { ...i, quantity: i.quantity + optimisticItem.quantity } : i)
                 : [optimisticItem, ...previous]
-            queryClient.setQueryData(['cart', walletAddress], optimistic)
+            queryClient.setQueryData(['cart'], optimistic)
             return { previous }
         },
         onError: (_err, _vars, context) => {
-            if (context?.previous) queryClient.setQueryData(['cart', walletAddress], context.previous)
+            if (context?.previous) queryClient.setQueryData(['cart'], context.previous)
         },
         onSuccess: (updated) => {
-            queryClient.setQueryData(['cart', walletAddress], updated)
+            queryClient.setQueryData(['cart'], updated)
         }
     })
 
@@ -103,17 +103,17 @@ export function useCart(walletAddress?: string) {
             return updated
         },
         onMutate: async ({ id }) => {
-            await queryClient.cancelQueries({ queryKey: ['cart', walletAddress] })
-            const previous = queryClient.getQueryData<CartItem[]>(['cart', walletAddress]) || []
+            await queryClient.cancelQueries({ queryKey: ['cart'] })
+            const previous = queryClient.getQueryData<CartItem[]>(['cart']) || []
             const optimistic = previous.filter(i => i.id !== id)
-            queryClient.setQueryData(['cart', walletAddress], optimistic)
+            queryClient.setQueryData(['cart'], optimistic)
             return { previous }
         },
         onError: (_err, _vars, context) => {
-            if (context?.previous) queryClient.setQueryData(['cart', walletAddress], context.previous)
+            if (context?.previous) queryClient.setQueryData(['cart'], context.previous)
         },
         onSuccess: (updated) => {
-            queryClient.setQueryData(['cart', walletAddress], updated)
+            queryClient.setQueryData(['cart'], updated)
         }
     })
 
@@ -131,20 +131,20 @@ export function useCart(walletAddress?: string) {
             return updated
         },
         onMutate: async ({ id, quantity }) => {
-            await queryClient.cancelQueries({ queryKey: ['cart', walletAddress] })
-            const previous = queryClient.getQueryData<CartItem[]>(['cart', walletAddress]) || []
+            await queryClient.cancelQueries({ queryKey: ['cart'] })
+            const previous = queryClient.getQueryData<CartItem[]>(['cart']) || []
             const q = Math.max(0, quantity)
             const optimistic = q === 0
                 ? previous.filter(i => i.id !== id)
                 : previous.map(i => i.id === id ? { ...i, quantity: q } : i)
-            queryClient.setQueryData(['cart', walletAddress], optimistic)
+            queryClient.setQueryData(['cart'], optimistic)
             return { previous }
         },
         onError: (_err, _vars, context) => {
-            if (context?.previous) queryClient.setQueryData(['cart', walletAddress], context.previous)
+            if (context?.previous) queryClient.setQueryData(['cart'], context.previous)
         },
         onSuccess: (updated) => {
-            queryClient.setQueryData(['cart', walletAddress], updated)
+            queryClient.setQueryData(['cart'], updated)
         }
     })
 
@@ -154,16 +154,16 @@ export function useCart(walletAddress?: string) {
             return [] as CartItem[]
         },
         onMutate: async () => {
-            await queryClient.cancelQueries({ queryKey: ['cart', walletAddress] })
-            const previous = queryClient.getQueryData<CartItem[]>(['cart', walletAddress]) || []
-            queryClient.setQueryData(['cart', walletAddress], [])
+            await queryClient.cancelQueries({ queryKey: ['cart'] })
+            const previous = queryClient.getQueryData<CartItem[]>(['cart']) || []
+            queryClient.setQueryData(['cart'], [])
             return { previous }
         },
         onError: (_err, _vars, context) => {
-            if (context?.previous) queryClient.setQueryData(['cart', walletAddress], context.previous)
+            if (context?.previous) queryClient.setQueryData(['cart'], context.previous)
         },
         onSuccess: (updated) => {
-            queryClient.setQueryData(['cart', walletAddress], updated)
+            queryClient.setQueryData(['cart'], updated)
         }
     })
 

@@ -153,3 +153,22 @@ export interface SearchParams {
     locationState?: string
     locationCity?: string
 } 
+
+
+type CartItemInput = { productId: number; quantity: number };
+
+export type GiftCartPayload = {
+  friendEmail: string;
+  items: CartItemInput[];
+  note?: string;
+};
+
+export type PayLinkPayload = {
+  items: CartItemInput[];
+};
+
+export type ShareWishlistPayload = {
+  productIds?: number[];
+};
+
+export type LinkResponse = { link: string };

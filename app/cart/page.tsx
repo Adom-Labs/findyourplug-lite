@@ -5,7 +5,7 @@ import { useCart } from '../components/home/_components/cart-hooks'
 import { PackageIcon, ShoppingCartIcon, PlusIcon, MinusIcon } from '../components/home/_components/icons'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { DIGEMART_API_BASE } from '../components/home/_components/api'
+import { DIGEMART_API_BASE, createGiftCheckout, createPayLink } from '../components/home/_components/api'
 import { ShareSheet } from '../components/shared/ShareSheet'
 
 export default function CartPage() {
@@ -193,9 +193,16 @@ export default function CartPage() {
                 secondary={{ kind: 'pay', label: 'Pay for me' }}
                 isConnected={isConnected}
                 onRequireConnect={() => toast.info('Please connect your wallet to use this feature.')}
-                onGiftSubmit={async (email) => {
-                    // placeholder submit; integrate API here if needed
-                    toast.success(`Gift flow started for ${email}`)
+                onGiftSubmit={async (email, note) => {
+                    try {
+                        const items = cartItems.map(i => ({ productId: i.id, quantity: i.quantity }))
+                        if (!address) { toast.error('Wallet address missing'); return }
+                        const res = await createGiftCheckout(address, { friendEmail: email, items, note })
+                        toast.success('Items gifted to friend.')
+                        if (res.link) { await navigator.clipboard.writeText(res.link) }
+                    } catch (e) {
+                        toast.error('Failed to create gift checkout')
+                    }
                 }}
                 onCreateCopyLink={async () => {
                     // for cart page, treat copy as gifting link for cart duplication if needed
@@ -205,13 +212,16 @@ export default function CartPage() {
                     url.searchParams.set('ids', ids)
                     return url.toString()
                 }}
-                onCreatePayLink={async () => {
-                    const ids = cartItems.map(i => i.id).join(',')
-                    const url = new URL(window.location.origin + '/cart')
-                    url.searchParams.set('request', 'pay')
-                    url.searchParams.set('ids', ids)
-                    url.searchParams.set('total', getCartTotals().totalPrice.toFixed(2))
-                    return new Promise<string>((resolve) => setTimeout(() => resolve(url.toString()), 800))
+                onCreatePayLink={async (note) => {
+                    const items = cartItems.map(i => ({ productId: i.id, quantity: i.quantity }))
+                    try {
+                        if (!address) { toast.error('Wallet address missing'); return '' }
+                        const res = await createPayLink(address, { items })
+                        return res.link || ''
+                    } catch (e) {
+                        toast.error('Failed to create pay link')
+                        return ''
+                    }
                 }}
                 summary={{ items: cartItems.reduce((s, i) => s + i.quantity, 0), total: getCartTotals().totalPrice }}
                 copyNote={"Share this cart with a friend or copy it to another account."}

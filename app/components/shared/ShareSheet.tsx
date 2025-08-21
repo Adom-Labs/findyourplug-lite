@@ -14,9 +14,12 @@ export interface ShareSheetProps {
   isConnected?: boolean;
   onRequireConnect?: () => void;
   // Actions
-  onGiftSubmit?: (email: string) => Promise<void> | void;
+  onGiftSubmit?: (email: string, note?: string) => Promise<void> | void;
   onCreateCopyLink?: () => Promise<string>;
-  onCreatePayLink?: () => Promise<string>;
+  onCreatePayLink?: (note?: string) => Promise<string>;
+  // Optional selectable list (e.g., wishlist products)
+  selectableItems?: Array<{ id: number; label: string; checked: boolean }>;
+  onToggleItem?: (id: number, checked: boolean) => void;
   // Summary
   summary?: { items: number; total?: number };
   // Notes
@@ -35,15 +38,18 @@ export function ShareSheet(props: ShareSheetProps) {
     onGiftSubmit,
     onCreateCopyLink,
     onCreatePayLink,
+    selectableItems,
+    onToggleItem,
     summary,
     copyNote,
     payNote,
   } = props;
 
-  const [mode, setMode] = useState<"menu" | "gift" | "linkProgress" | "linkReady">("menu");
+  const [mode, setMode] = useState<"menu" | "gift" | "payForm" | "linkProgress" | "linkReady">("menu");
   const [friendEmail, setFriendEmail] = useState("");
   const [link, setLink] = useState("");
   const [note, setNote] = useState<string | undefined>(undefined);
+  const [payNoteState, setPayNoteState] = useState<string | undefined>(undefined);
 
   
   // Reset internal state whenever the sheet closes or opens fresh
@@ -53,19 +59,26 @@ export function ShareSheet(props: ShareSheetProps) {
       setFriendEmail("");
       setLink("");
       setNote(undefined);
+      setPayNoteState(undefined);
     }
-}, [isOpen]);
+  }, [isOpen]);
 
-if (!isOpen) return null;
+  if (!isOpen) return null;
 
   const startCopyFlow = async () => {
     setMode("linkProgress");
     setNote(copyNote);
     try {
       const created = (await onCreateCopyLink?.()) || "";
+      if (!created) {
+        try { const { toast } = await import('sonner'); toast.error('Failed to create link'); } catch {}
+        setMode("menu");
+        return;
+      }
       setLink(created);
       setMode("linkReady");
     } catch {
+      try { const { toast } = await import('sonner'); toast.error('Failed to create link'); } catch {}
       setLink("");
       setMode("menu");
     }
@@ -73,12 +86,18 @@ if (!isOpen) return null;
 
   const startPayFlow = async () => {
     setMode("linkProgress");
-    setNote(payNote);
+    setNote(payNoteState);
     try {
-      const created = (await onCreatePayLink?.()) || "";
+      const created = (await onCreatePayLink?.(payNoteState)) || "";
+      if (!created) {
+        try { const { toast } = await import('sonner'); toast.error('Failed to create link'); } catch {}
+        setMode("menu");
+        return;
+      }
       setLink(created);
       setMode("linkReady");
     } catch {
+      try { const { toast } = await import('sonner'); toast.error('Failed to create link'); } catch {}
       setLink("");
       setMode("menu");
     }
@@ -100,6 +119,21 @@ if (!isOpen) return null;
         {mode === "menu" && (
           <>
             <h3 className="text-lg font-semibold text-[var(--ock-text-foreground)] text-center">Share</h3>
+            {Array.isArray(selectableItems) && selectableItems.length > 0 && (
+              <div className="space-y-2 max-h-56 overflow-y-auto border border-[var(--ock-border)] rounded-md p-2">
+                <div className="text-xs font-medium text-[var(--ock-text-foreground-muted)] px-1">Select items (optional)</div>
+                {selectableItems.map((it) => (
+                  <label key={it.id} className="flex items-center space-x-3 p-2 rounded hover:bg-[var(--ock-bg-alternate)] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={it.checked}
+                      onChange={(e) => onToggleItem?.(it.id, e.target.checked)}
+                    />
+                    <span className="flex-1 text-sm text-[var(--ock-text-foreground)] truncate">{it.label}</span>
+                  </label>
+                ))}
+              </div>
+            )}
             <div className="space-y-2">
               <button
                 className="w-full py-3 rounded-lg border border-[var(--ock-border)] text-[var(--ock-text-foreground)]"
@@ -124,7 +158,7 @@ if (!isOpen) return null;
                     onRequireConnect?.();
                     return;
                   }
-                  void startPayFlow();
+                  setMode("payForm");
                 }}
               >
                 {secondary.label}
@@ -149,6 +183,14 @@ if (!isOpen) return null;
                 placeholder="friend@example.com"
                 className="w-full rounded-md border border-[var(--ock-border)] px-3 py-2 bg-[var(--ock-bg-default)] text-[var(--ock-text-foreground)]"
               />
+              <label className="block text-sm text-[var(--ock-text-foreground)]">Note (optional)</label>
+              <textarea
+                value={note || ""}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Add a message for your friend"
+                className="w-full rounded-md border border-[var(--ock-border)] px-3 py-2 bg-[var(--ock-bg-default)] text-[var(--ock-text-foreground)]"
+                rows={3}
+              />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -164,12 +206,46 @@ if (!isOpen) return null;
                     try { const { toast } = await import('sonner'); toast.error('Please enter a valid email'); } catch {}
                     return;
                   }
-                  await onGiftSubmit?.(friendEmail);
-                  onClose();
+                  try {
+                    await onGiftSubmit?.(friendEmail, note);
+                    onClose();
+                  } catch {
+                    try { const { toast } = await import('sonner'); toast.error('Failed to process gift'); } catch {}
+                  }
                 }}
                 className="py-3 rounded-lg bg-green-600 text-white"
               >
                 Pay now
+              </button>
+            </div>
+          </>
+        )}
+
+        {mode === "payForm" && (
+          <>
+            <h3 className="text-lg font-semibold text-[var(--ock-text-foreground)] text-center">Pay for Me</h3>
+            <div className="space-y-2">
+              <label className="block text-sm text-[var(--ock-text-foreground)]">Note (optional)</label>
+              <textarea
+                value={payNoteState || ""}
+                onChange={(e) => setPayNoteState(e.target.value)}
+                placeholder="Add a note for friends"
+                className="w-full rounded-md border border-[var(--ock-border)] px-3 py-2 bg-[var(--ock-bg-default)] text-[var(--ock-text-foreground)]"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setMode("menu")}
+                className="py-3 rounded-lg border border-[var(--ock-border)] text-[var(--ock-text-foreground)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void startPayFlow()}
+                className="py-3 rounded-lg bg-[var(--ock-accent)] text-[var(--ock-bg-default)]"
+              >
+                Create link
               </button>
             </div>
           </>

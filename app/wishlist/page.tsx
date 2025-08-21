@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
 import { useAccount } from 'wagmi'
 import { ResultCard } from '../components/home/_components/result-card'
 import { useWishlist } from '../components/home/_components/wishlist-hooks'
@@ -9,7 +8,7 @@ import { StoreIcon, PackageIcon, WalletIcon } from '../components/home/_componen
 import { SearchResult } from '../components/home/_components/types'
 import { useWalletDialog } from '@/app/components/layout/WalletProvider'
 import { ShareSheet } from '../components/shared/ShareSheet'
-import { DIGEMART_API_BASE } from '../components/home/_components/api'
+import { DIGEMART_API_BASE, createWishlistShare } from '../components/home/_components/api'
 
 export default function WishlistPage() {
     const [activeTab, setActiveTab] = useState<'products' | 'stores'>('products')
@@ -244,26 +243,34 @@ export default function WishlistPage() {
                 primary={{ kind: 'copyLink', label: 'Copy wishlist link' }}
                 secondary={{ kind: 'pay', label: 'Pay for me' }}
                 isConnected={isConnected}
-                onRequireConnect={() => toast.info('Please connect your wallet to use this feature.')}
+                selectableItems={products.map(p => ({ id: p.id, label: p.name, checked: !!selected[p.id] }))}
+                onToggleItem={(id, checked) => setSelected(prev => ({ ...prev, [id]: checked }))}
+                onRequireConnect={() => {
+                    try { const { toast } = require('sonner'); toast.info('Please connect your wallet to use this feature.') } catch {}
+                }}
                 onCreateCopyLink={async () => {
-                    const ids = Object.keys(selected).filter((id) => selected[Number(id)]).map(Number)
-                    const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/wishlist/share`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ productIds: ids.length ? ids : products.map(p => p.id) })
-                    })
-                    const data = await res.json()
-                    return data?.link || new URL(window.location.origin + '/wishlist').toString()
+                    try {
+                        const ids = Object.keys(selected).filter((id) => selected[Number(id)]).map(Number)
+                        const data = await createWishlistShare(address!, { productIds: ids.length ? ids : products.map(p => p.id) })
+                        return data.link
+                    } catch {
+                        try { const { toast } = require('sonner'); toast.error('Failed to create wishlist link') } catch {}
+                        return ''
+                    }
                 }}
                 onCreatePayLink={async () => {
-                    const ids = Object.keys(selected).filter((id) => selected[Number(id)]).map(Number)
-                    const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/wishlist/paylink`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ productIds: ids.length ? ids : products.map(p => p.id) })
-                    })
-                    const data = await res.json()
-                    return data?.link || new URL(window.location.origin + '/wishlist').toString()
+                    try {
+                        const ids = Object.keys(selected).filter((id) => selected[Number(id)]).map(Number)
+                        const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/wishlist/paylink`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ productIds: ids.length ? ids : products.map(p => p.id) })
+                        })
+                        const data = await res.json()
+                        return data?.link || ''
+                    } catch {
+                        return ''
+                    }
                 }}
                 summary={{ items: products.length }}
                 copyNote={'Anyone can copy this wishlist to their Digemart account.'}

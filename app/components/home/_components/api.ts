@@ -5,10 +5,46 @@ import type {
     SearchApiResponse,
     DisplayProduct,
     DisplayStore,
-    DisplayCategory
+    DisplayCategory,
+    GiftCartPayload,
+    PayLinkPayload,
+    ShareWishlistPayload,
+    LinkResponse
 } from './types'
 
-export const DIGEMART_API_BASE = 'https://api.digemart.com/api'
+// export const DIGEMART_API_BASE = 'https://api.digemart.com/api'
+export const DIGEMART_API_BASE = 'http://localhost:4402/api'
+
+export async function createGiftCheckout(address: string, payload: GiftCartPayload): Promise<LinkResponse> {
+    const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/cart/gift`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Gift API error: ${res.status}`);
+    return res.json();
+}
+
+export async function createPayLink(address: string, payload: PayLinkPayload): Promise<LinkResponse> {
+    const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/cart/paylink`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Paylink API error: ${res.status}`);
+    return res.json();
+}
+
+export async function createWishlistShare(address: string, payload: ShareWishlistPayload = {}): Promise<LinkResponse> {
+    const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/wishlist/share`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Wishlist share API error: ${res.status}`);
+    return res.json();
+}
+
 
 // Helper function to format currency
 const formatCurrency = (price: string): string => {
@@ -81,7 +117,8 @@ const convertSearchCategoryToDisplay = (category: any): DisplayCategory => ({
 // Fetch featured stores from landing page
 export const fetchTopStores = async (): Promise<DisplayStore[]> => {
     try {
-        const response = await fetch('https://api.digemart.com/api/landing-page')
+        // const response = await fetch('https://api.digemart.com/api/landing-page')
+        const response = await fetch(`${DIGEMART_API_BASE}/landing-page`)
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`)
