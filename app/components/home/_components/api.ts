@@ -12,8 +12,8 @@ import type {
     LinkResponse
 } from './types'
 
-// export const DIGEMART_API_BASE = 'https://api.digemart.com/api'
-export const DIGEMART_API_BASE = 'http://localhost:4402/api'
+export const DIGEMART_API_BASE = 'https://api.digemart.com/api'
+// export const DIGEMART_API_BASE = 'http://localhost:4402/api'
 
 export async function createGiftCheckout(address: string, payload: GiftCartPayload): Promise<LinkResponse> {
     const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/cart/gift`, {
