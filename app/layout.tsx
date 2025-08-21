@@ -3,6 +3,10 @@ import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { WalletDialogProvider } from "@/app/components/layout/WalletProvider";
+import MobileHeader from "@/app/components/layout/MobileHeader";
+import MobileNav from "@/app/components/layout/MobileNav";
+import { Toaster } from "sonner";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -42,8 +46,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-background">
-        <Providers>{children}</Providers>
+      <body className="bg-[var(--app-background)] pt-14 pb-16">
+        <Providers>
+          <WalletDialogProvider>
+            <MobileHeader />
+            <div className="w-full max-w-md mx-auto px-4 py-3">
+              {children}
+            </div>
+            <MobileNav />
+          </WalletDialogProvider>
+        </Providers>
+        <Toaster position="top-center" />
       </body>
     </html>
   );

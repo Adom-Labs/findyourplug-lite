@@ -237,8 +237,8 @@ export async function searchStoresAndProducts(
         })
 
         return results.sort((a, b) => {
-            const aRank = 'rank' in a ? (a as any).rank : 0
-            const bRank = 'rank' in b ? (b as any).rank : 0
+            const aRank: number = (a as { rank?: number }).rank ?? 0
+            const bRank: number = (b as { rank?: number }).rank ?? 0
             return bRank - aRank
         })
 

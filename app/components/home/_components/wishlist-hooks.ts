@@ -278,7 +278,7 @@ export function useWishlist(walletAddress?: string) {
     const { updateWishlistIds } = useWishlistIds()
 
     // Get wishlist items - from API if connected, localStorage if not  
-    const { data: wishlistItems = [], isLoading, error } = useQuery({
+    const { data: wishlistItems = [], isLoading, error, refetch } = useQuery({
         queryKey: ['wishlist', walletAddress],
         queryFn: () => {
             if (isConnected && walletAddress) {
@@ -419,5 +419,6 @@ export function useWishlist(walletAddress?: string) {
         addError: addToWishlistMutation.error,
         removeError: removeFromWishlistMutation.error,
         isConnected,
+        refetchWishlist: refetch
     }
 } 

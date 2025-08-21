@@ -8,10 +8,13 @@ import {
     VerifiedIcon,
     StarIcon,
     HeartIcon,
-    LocationIcon
+    LocationIcon,
+    ShoppingCartIcon
 } from './icons'
 import { useWishlist, useWishlistIds } from './wishlist-hooks'
-import type { SearchResult } from './types'
+import { useCart } from './cart-hooks'
+import type { SearchResult, DisplayStore, DisplayProduct } from './types'
+import { useWalletDialog } from '@/app/components/layout/WalletProvider'
 
 interface ResultCardProps {
     result: SearchResult
@@ -20,8 +23,10 @@ interface ResultCardProps {
 export function ResultCard({ result }: ResultCardProps) {
     const router = useRouter()
     const { address } = useAccount()
+    const { openWalletDialog } = useWalletDialog()
     const { addToWishlist, removeFromWishlist, isAdding, isRemoving } = useWishlist(address)
     const { isInWishlist } = useWishlistIds()
+    const { addItem, isAdding: isAddingToCart } = useCart(address)
 
     const isProduct = result.type === 'product'
     const isStore = result.type === 'store'
@@ -40,11 +45,22 @@ export function ResultCard({ result }: ResultCardProps) {
         // Only handle wishlist for products and stores
         if (!isProduct && !isStore) return
 
+        if (!address) {
+            // Prompt wallet connection if not connected
+            try {
+                openWalletDialog()
+            } catch (err) {
+                // if provider not available, no-op
+                console.warn('Wallet dialog not available')
+            }
+            return
+        }
+
         try {
             if (inWishlist) {
                 await removeFromWishlist(result.id, result.type as 'product' | 'store')
             } else {
-                await addToWishlist(result as any, result.type as 'product' | 'store')
+                await addToWishlist(result as DisplayProduct | DisplayStore, result.type as 'product' | 'store')
             }
         } catch (error) {
             console.error('Error toggling wishlist:', error)
@@ -62,7 +78,7 @@ export function ResultCard({ result }: ResultCardProps) {
                     onClick={handleWishlistToggle}
                     disabled={isAdding || isRemoving}
                     className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-colors z-10 ${inWishlist
-                        ? 'bg-red-500 text-white hover:bg-red-600'
+                        ? 'bg-red-500 text-[var(--ock-bg-default)] hover:bg-red-600'
                         : 'bg-white/80 text-gray-400 hover:bg-red-50 hover:text-red-500 border border-gray-200'
                         }`}
                     title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
@@ -111,24 +127,43 @@ export function ResultCard({ result }: ResultCardProps) {
                         {/* Product details */}
                         {isProduct && (
                             <>
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-3">
                                     <span className="font-bold text-[var(--ock-text-foreground)] text-sm">
                                         {result.price}
                                     </span>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            try {
+                                                // Default quantity 1; preview page supports multi-qty
+                                                if (isProduct) {
+                                                    addItem(result as DisplayProduct, 1)
+                                                }
+                                            } catch (err) {
+                                                console.error('Error adding to cart', err)
+                                            }
+                                        }}
+                                        disabled={isAddingToCart}
+                                        className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs bg-[var(--ock-accent)] text-[var(--ock-bg-default)] hover:bg-[var(--ock-accent)]/90 transition-colors"
+                                        title="Add to cart"
+                                    >
+                                        <ShoppingCartIcon size="sm" />
+                                        <span>Add to Cart</span>
+                                    </button>
                                 </div>
                             </>
                         )}
 
                         {/* Store details */}
-                        {isStore && result.rating !== undefined && (
+                        {isStore && Number.isFinite(Number((result as DisplayStore).rating)) && (
                             <div className="flex items-center space-x-1 text-xs">
                                 <StarIcon size="sm" className="text-yellow-500" />
                                 <span className="font-medium text-[var(--ock-text-foreground)]">
-                                    {result.rating}
+                                    {Number((result as DisplayStore).rating).toFixed(1)}
                                 </span>
-                                {result.reviews && (
+                                {typeof (result as DisplayStore).reviews === 'number' && (
                                     <span className="text-[var(--ock-text-foreground-muted)]">
-                                        ({result.reviews})
+                                        ({(result as DisplayStore).reviews})
                                     </span>
                                 )}
                             </div>

@@ -5,14 +5,11 @@
 :root {
   --background: #ffffff;
   --foreground: #111111;
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111111;
-    --foreground: #ffffff;
-  }
-}
+
 
 body {
   color: var(--foreground);
@@ -23,3 +20,14 @@ body {
   font-style: normal;
   font-size: 80%;
 }
+
+.pt-safe { padding-top: var(--safe-area-inset-top); }
+.pb-safe { padding-bottom: var(--safe-area-inset-bottom); }
+
+html { scroll-behavior: smooth; }
+* { touch-action: manipulation; }
+.backdrop-blur-md { backdrop-filter: blur(12px); }
+
+.z-header { z-index: 50; }
+.z-nav { z-index: 50; }
+.z-modal { z-index: 100; }

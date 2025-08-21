@@ -114,3 +114,27 @@ export const CategoryIcon = ({ className }: { className?: string }) => (
         <line x1="15" x2="15" y1="9" y2="15" />
     </svg>
 ) 
+
+export function ShoppingCartIcon({ className = '', size = 'md' }: IconProps) {
+    return (
+        <svg className={`${sizeClasses[size]} ${className}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H6.4M7 13L5.4 5M7 13l-2 9h14l-2-9M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+        </svg>
+    )
+}
+
+export function PlusIcon({ className = '', size = 'md' }: IconProps) {
+    return (
+        <svg className={`${sizeClasses[size]} ${className}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v14m-7-7h14" />
+        </svg>
+    )
+}
+
+export function MinusIcon({ className = '', size = 'md' }: IconProps) {
+    return (
+        <svg className={`${sizeClasses[size]} ${className}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14" />
+        </svg>
+    )
+}

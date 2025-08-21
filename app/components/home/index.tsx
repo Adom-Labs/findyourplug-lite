@@ -47,6 +47,7 @@ export default function Home() {
         setSelectedFilter(filter)
     }
 
+
     return (
         <div className="space-y-4">
             {/* Header */}
@@ -67,15 +68,15 @@ export default function Home() {
                     placeholder="Search for anything..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-[var(--ock-bg-alternate)] border border-[var(--ock-border)] rounded-xl text-[var(--ock-text-foreground)] placeholder-[var(--ock-text-foreground-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ock-accent)] focus:border-transparent text-sm"
+                    className="w-full pl-10 pr-4 py-3 bg-[var(--ock-bg-alternate)] border border-[var(--ock-border)] rounded-xl text-[var(--ock-text-foreground)] placeholder-[var(--ock-text-foreground-muted)] focus:outline-none focus:ring-2 focus:ring-[#00009e] focus:border-transparent text-sm"
                 />
             </div>
 
             {/* Search Filters (only show when searching) */}
             {isSearchMode && (
-                <div className="flex space-x-2 overflow-x-auto pb-2">
+                <div className="flex space-x-2 overflow-x-hidden pb-2">
                     {[
-                        { key: 'all', label: 'All Results' },
+                        { key: 'all', label: 'All' },
                         { key: 'product', label: 'Products' },
                         { key: 'store', label: 'Stores' },
                         { key: 'category', label: 'Categories' },
@@ -84,14 +85,22 @@ export default function Home() {
                             key={key}
                             onClick={() => handleFilterChange(key as typeof selectedFilter)}
                             className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFilter === key
-                                ? 'bg-[var(--ock-accent)] text-white'
-                                : 'bg-[var(--ock-bg-alternate)] text-[var(--ock-text-foreground-muted)] hover:bg-[var(--ock-bg-default)]'
+                                ? 'bg-[#00009e] text-white'
+                                : 'bg-[var(--ock-bg-alternate)] text-[var(--ock-text-foreground-muted)] hover:bg-[var(--ock-bg-alternate)]'
                                 }`}
                         >
                             {label}
                             {searchCounts && key !== 'all' && (
                                 <span className="ml-1 opacity-75">
-                                    ({searchCounts[key as keyof typeof searchCounts]})
+                                    ({searchCounts[
+                                        key === 'product'
+                                            ? 'products'
+                                            : key === 'store'
+                                                ? 'stores'
+                                                : key === 'category'
+                                                    ? 'categories'
+                                                    : key as keyof typeof searchCounts
+                                    ]})
                                 </span>
                             )}
                         </button>

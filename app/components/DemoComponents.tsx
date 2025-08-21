@@ -439,7 +439,7 @@ function TransactionCard() {
                 console.error("Transaction failed:", error)
               }
             >
-              <TransactionButton className="text-white text-md" />
+              <TransactionButton className="text-[var(--app-background)] text-md" />
               <TransactionStatus>
                 <TransactionStatusAction />
                 <TransactionStatusLabel />

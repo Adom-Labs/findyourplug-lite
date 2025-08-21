@@ -15,7 +15,7 @@ export default function NotFound() {
         <div className="space-y-3">
           <Link
             href="/"
-            className="block w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors"
+            className="block w-full px-4 py-2 bg-primary text-[var(--ock-bg-default)] rounded-md hover:bg-primary/80 transition-colors"
           >
             Return Home
           </Link>

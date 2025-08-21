@@ -6,6 +6,15 @@ const nextConfig = {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     return config;
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "digemart.com",
+      },
+    ],
+    
+  },
 };
 
 export default nextConfig;

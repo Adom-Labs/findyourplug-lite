@@ -1,23 +1,34 @@
 "use client";
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { useAccount } from 'wagmi'
 import { ResultCard } from '../components/home/_components/result-card'
 import { useWishlist } from '../components/home/_components/wishlist-hooks'
 import { StoreIcon, PackageIcon, WalletIcon } from '../components/home/_components/icons'
-import { ConnectWallet } from '@coinbase/onchainkit/wallet'
 import { SearchResult } from '../components/home/_components/types'
+import { useWalletDialog } from '@/app/components/layout/WalletProvider'
+import { ShareSheet } from '../components/shared/ShareSheet'
+import { DIGEMART_API_BASE } from '../components/home/_components/api'
 
 export default function WishlistPage() {
     const [activeTab, setActiveTab] = useState<'products' | 'stores'>('products')
+    const [showShare, setShowShare] = useState(false)
+    const [selected, setSelected] = useState<Record<number, boolean>>({})
     const { address, isConnected } = useAccount()
-    const { wishlistItems, removeFromWishlist, isLoading, error } = useWishlist(address)
+    const { wishlistItems, removeFromWishlist, isLoading, error, refetchWishlist } = useWishlist(address)
+    const { openWalletDialog } = useWalletDialog()
 
     // Filter items by type
     const products = wishlistItems.filter(item => item.type === 'product')
     const stores = wishlistItems.filter(item => item.type === 'store')
 
     const currentItems = activeTab === 'products' ? products : stores
+
+    // refetch wishlist when page is mounted
+    useEffect(() => {
+        refetchWishlist()
+    }, [])
 
     // If wallet not connected, show connect prompt
     if (!isConnected) {
@@ -46,12 +57,13 @@ export default function WishlistPage() {
                             Please connect your wallet to save and access your wishlist across devices
                         </p>
                     </div>
-                    <ConnectWallet className="mx-auto">
-                        <div className="inline-flex items-center space-x-2 px-4 py-2 bg-[var(--ock-accent)] text-white rounded-lg hover:bg-[var(--ock-accent)]/90 transition-colors">
-                            <WalletIcon className="w-4 h-4" />
-                            <span>Connect Wallet</span>
-                        </div>
-                    </ConnectWallet>
+                    <button
+                        onClick={() => openWalletDialog()}
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-black/90 transition-colors mx-auto"
+                    >
+                        <WalletIcon className="w-4 h-4" />
+                        <span>Connect Wallet</span>
+                    </button>
                 </div>
             </div>
         )
@@ -79,8 +91,8 @@ export default function WishlistPage() {
                         </p>
                     </div>
                     <button
-                        onClick={() => window.location.reload()}
-                        className="inline-flex items-center space-x-2 px-4 py-2 bg-[var(--ock-accent)] text-white rounded-lg hover:bg-[var(--ock-accent)]/90 transition-colors"
+                        onClick={() => refetchWishlist()}
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-[var(--ock-accent)] text-[var(--ock-bg-default)] rounded-lg hover:bg-[var(--ock-accent)]/90 transition-colors"
                     >
                         <span>Try Again</span>
                     </button>
@@ -106,7 +118,7 @@ export default function WishlistPage() {
                 <button
                     onClick={() => setActiveTab('products')}
                     className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'products'
-                        ? 'bg-[var(--ock-bg-default)] text-[var(--ock-text-foreground)] shadow-sm'
+                        ? 'bg-[#00009e] text-white shadow-sm'
                         : 'text-[var(--ock-text-foreground-muted)] hover:text-[var(--ock-text-foreground)]'
                         }`}
                 >
@@ -120,7 +132,7 @@ export default function WishlistPage() {
                 <button
                     onClick={() => setActiveTab('stores')}
                     className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'stores'
-                        ? 'bg-[var(--ock-bg-default)] text-[var(--ock-text-foreground)] shadow-sm'
+                        ? 'bg-[#00009e] text-white shadow-sm'
                         : 'text-[var(--ock-text-foreground-muted)] hover:text-[var(--ock-text-foreground)]'
                         }`}
                 >
@@ -140,9 +152,19 @@ export default function WishlistPage() {
                         Saved {activeTab === 'products' ? 'Products' : 'Stores'}
                     </h2>
                     {currentItems.length > 0 && (
-                        <span className="text-xs text-[var(--ock-text-foreground-muted)]">
-                            {currentItems.length} {currentItems.length === 1 ? 'item' : 'items'}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-xs text-[var(--ock-text-foreground-muted)]">
+                                {currentItems.length} {currentItems.length === 1 ? 'item' : 'items'}
+                            </span>
+                            {activeTab === 'products' && (
+                                <button
+                                    onClick={() => setShowShare(true)}
+                                    className="px-3 py-1 text-xs rounded-md border border-[var(--ock-border)] text-[var(--ock-text-foreground)]"
+                                >
+                                    Share Wishlist
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
 
@@ -169,11 +191,21 @@ export default function WishlistPage() {
                     <div className="space-y-3">
                         {currentItems.map((item) => (
                             <div key={`${item.type}-${item.id}`} className="relative">
+                                {activeTab === 'products' && (
+                                    <label className="absolute top-2 left-2 z-10 inline-flex items-center space-x-2 bg-white/70 px-2 py-1 rounded">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!selected[item.id]}
+                                            onChange={(e) => setSelected(prev => ({ ...prev, [item.id]: e.target.checked }))}
+                                        />
+                                        <span className="text-xs">Select</span>
+                                    </label>
+                                )}
                                 <ResultCard result={item as SearchResult} />
                                 {/* Remove Button */}
                                 <button
                                     onClick={() => removeFromWishlist(item.id, item.type)}
-                                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-[var(--ock-bg-default)] rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                                     title="Remove from wishlist"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,6 +238,37 @@ export default function WishlistPage() {
                     </div>
                 )}
             </div>
+            <ShareSheet
+                isOpen={showShare && activeTab === 'products'}
+                onClose={() => setShowShare(false)}
+                primary={{ kind: 'copyLink', label: 'Copy wishlist link' }}
+                secondary={{ kind: 'pay', label: 'Pay for me' }}
+                isConnected={isConnected}
+                onRequireConnect={() => toast.info('Please connect your wallet to use this feature.')}
+                onCreateCopyLink={async () => {
+                    const ids = Object.keys(selected).filter((id) => selected[Number(id)]).map(Number)
+                    const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/wishlist/share`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productIds: ids.length ? ids : products.map(p => p.id) })
+                    })
+                    const data = await res.json()
+                    return data?.link || new URL(window.location.origin + '/wishlist').toString()
+                }}
+                onCreatePayLink={async () => {
+                    const ids = Object.keys(selected).filter((id) => selected[Number(id)]).map(Number)
+                    const res = await fetch(`${DIGEMART_API_BASE}/users/${address}/wishlist/paylink`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productIds: ids.length ? ids : products.map(p => p.id) })
+                    })
+                    const data = await res.json()
+                    return data?.link || new URL(window.location.origin + '/wishlist').toString()
+                }}
+                summary={{ items: products.length }}
+                copyNote={'Anyone can copy this wishlist to their Digemart account.'}
+                payNote={'Share this link with friends to pay for you. You will receive a mail to complete checkout after.'}
+            />
         </div>
     )
 } 
