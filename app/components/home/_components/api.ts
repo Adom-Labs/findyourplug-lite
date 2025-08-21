@@ -45,6 +45,39 @@ export async function createWishlistShare(address: string, payload: ShareWishlis
     return res.json();
 }
 
+// ---------------- Wallet auth helpers ----------------
+
+type WalletLoginResponse = { nonce: string; message: string }
+type WalletVerifyResponse = { message: string; token: string; user: { id: number; email?: string | null; walletAddress?: string | null; role: string } }
+
+export async function walletLogin(walletAddress: string): Promise<WalletLoginResponse> {
+	const res = await fetch(`${DIGEMART_API_BASE}/auth/wallet/login`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ walletAddress }),
+	})
+	if (!res.ok) throw new Error(`Wallet login failed: ${res.status}`)
+	return res.json()
+}
+
+export async function walletVerify(walletAddress: string, signature: string): Promise<WalletVerifyResponse> {
+	const res = await fetch(`${DIGEMART_API_BASE}/auth/wallet/verify`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ walletAddress, signature }),
+	})
+	if (!res.ok) throw new Error(`Wallet verify failed: ${res.status}`)
+	return res.json()
+}
+
+export async function fetchUserProfile(token: string) {
+	const res = await fetch(`${DIGEMART_API_BASE}/users/me`, {
+		headers: { Authorization: `Bearer ${token}` },
+	})
+	if (!res.ok) throw new Error(`Profile fetch failed: ${res.status}`)
+	return res.json()
+}
+
 
 // Helper function to format currency
 const formatCurrency = (price: string): string => {

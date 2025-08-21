@@ -2,6 +2,10 @@
 
 import React from "react";
 import { ConnectWallet } from "@coinbase/onchainkit/wallet";
+import { useAccount, useSignMessage } from "wagmi";
+import { useEffect, useState } from "react";
+import { walletLogin, walletVerify } from "@/app/components/home/_components/api";
+import { toast } from "sonner";
 
 interface ConnectWalletDialogProps {
   isOpen: boolean;
@@ -31,6 +35,34 @@ export default function ConnectWalletDialog({ isOpen, onClose }: ConnectWalletDi
   const onBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose();
   };
+
+  const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+
+  const [step, setStep] = useState<"idle"|"logging"|"signing"|"verifying"|"done">("idle");
+
+  useEffect(() => {
+    const run = async () => {
+      if (!isOpen || !isConnected || !address) return;
+      try {
+        setStep("logging");
+        const { message } = await walletLogin(address);
+        setStep("signing");
+        const signature = await signMessageAsync({ message });
+        setStep("verifying");
+        const resp = await walletVerify(address, signature);
+        // store token for subsequent calls if needed (e.g., localStorage)
+        try { localStorage.setItem("digemart_jwt", resp.token); } catch {}
+        setStep("done");
+        toast.success("Wallet connected & logged in");
+        onClose();
+      } catch (e: any) {
+        toast.error(e?.message || "Wallet auth failed");
+        setStep("idle");
+      }
+    };
+    run();
+  }, [isOpen, isConnected, address, signMessageAsync, onClose]);
 
   return (
     <div
@@ -69,7 +101,11 @@ export default function ConnectWalletDialog({ isOpen, onClose }: ConnectWalletDi
               </button>
             </div>
             <p className="text-sm text-[var(--ock-text-foreground-muted)]">
-              Connect your wallet to save and manage your wishlist across devices.
+              {step === "idle" && "Connect your wallet to save and manage your wishlist across devices."}
+              {step === "logging" && "Logging you in…"}
+              {step === "signing" && "Please sign the message to continue…"}
+              {step === "verifying" && "Verifying…"}
+              {step === "done" && "Success!"}
             </p>
             <div className="pt-2">
               <ConnectWallet />
