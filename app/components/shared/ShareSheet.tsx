@@ -141,7 +141,7 @@ if (!isOpen) return null;
               Gift a friend allows you to pay for this and send your friend a link to complete checkout and receive the items.
             </p>
             <div className="space-y-2">
-              <label className="block text-sm text-[var(--ock-text-foreground)]">Friend's Email</label>
+              <label className="block text-sm text-[var(--ock-text-foreground)]">Friend&apos;s Email</label>
               <input
                 type="email"
                 value={friendEmail}

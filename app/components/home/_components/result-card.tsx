@@ -51,7 +51,7 @@ export function ResultCard({ result }: ResultCardProps) {
                 openWalletDialog()
             } catch (err) {
                 // if provider not available, no-op
-                console.warn('Wallet dialog not available')
+                console.warn('Wallet dialog not available', err)
             }
             return
         }
@@ -139,8 +139,8 @@ export function ResultCard({ result }: ResultCardProps) {
                                                 if (isProduct) {
                                                     addItem(result as DisplayProduct, 1)
                                                 }
-                                            } catch (err) {
-                                                console.error('Error adding to cart', err)
+                                            } catch (error) {
+                                                console.error('Error adding to cart', error)
                                             }
                                         }}
                                         disabled={isAddingToCart}

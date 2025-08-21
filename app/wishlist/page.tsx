@@ -28,7 +28,7 @@ export default function WishlistPage() {
     // refetch wishlist when page is mounted
     useEffect(() => {
         refetchWishlist()
-    }, [])
+    }, [refetchWishlist])
 
     // If wallet not connected, show connect prompt
     if (!isConnected) {

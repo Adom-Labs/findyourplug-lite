@@ -1,15 +1,15 @@
 {
     "accountAssociation": {
         "header": "eyJmaWQiOjI5OTgzNCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGQyYkM4RTUxMkU5MjA3M0E2YmJmMkU1NEE3OThiMjMwMDM4ODMyYWQifQ",
-        "payload": "eyJkb21haW4iOiJtaW5pZmluZHlvdXJwbHVnLnZlcmNlbC5hcHAifQ",
-        "signature": "MHhjYjQxNDQxZWQ4ZTFkNjUyY2JlZjRmMTgyODIyM2M5MjBkZTM1ZGU5NWMxMmU5OGQxNmZkMDE0YTA1ZmFlMjAxMjJiMjdiMTBmODVjNmYxZTY3Y2Q2NTYwMzhiMDZmNGNmMGEzNmMzMmZiYTMwNGMwYzA0ZTk3NjFjNjE3OTA5NjFj"
-    },
+        "payload": "eyJkb21haW4iOiJmaW5keW91cnBsdWctbGl0ZS52ZXJjZWwuYXBwIn0",
+        "signature": "MHg2NmNhNjhjYTg1NTE4MDI2YTg3MDQxYjI1M2Y5OGNjNzNkY2ZlNmMzZGY1MTg2Mzg0NTI3ZTQzZDkzMzBhYTE3NjM2MWIxNjVmNmIzZDg3MWM0MjBlZTNlYTdlMWI0NjVmMGM1MzQ3YTYxYWVkY2QxZGQxYmNkMTFlYzJmNmJjYjFi"
+      },
     "frame": {
-        "version": "next",
+        "version": "1",
         "name": "Find Your Plug | Digemart",
-        "iconUrl": "https://minifindyourplug.vercel.app/favicon.ico",
-        "splashImageUrl": "https://minifindyourplug.vercel.app/favicon.ico",
+        "iconUrl": "https://findyourplug-lite.vercel.app/favicon.ico",
+        "splashImageUrl": "https://findyourplug-lite.vercel.app/favicon.ico",
         "splashBackgroundColor": "#ffffff",
-        "homeUrl": "https://minifindyourplug.vercel.app"
+        "homeUrl": "https://findyourplug-lite.vercel.app"
     }
 }

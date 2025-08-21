@@ -2,11 +2,9 @@
 
 import { useAccount } from 'wagmi'
 import { useCart } from '../components/home/_components/cart-hooks'
-import { ResultCard } from '../components/home/_components/result-card'
 import { PackageIcon, ShoppingCartIcon, PlusIcon, MinusIcon } from '../components/home/_components/icons'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import type { DisplayProduct } from '../components/home/_components/types'
 import { DIGEMART_API_BASE } from '../components/home/_components/api'
 import { ShareSheet } from '../components/shared/ShareSheet'
 
@@ -14,10 +12,7 @@ export default function CartPage() {
     const { address, isConnected } = useAccount()
     const { cartItems, updateQuantity, removeItem, clearCart, checkout, getCartTotals, isLoading, error } = useCart(address)
     const [showShare, setShowShare] = useState(false)
-    const [shareMode, setShareMode] = useState<'menu' | 'gift' | 'pay'>('menu')
-    const [friendEmail, setFriendEmail] = useState('')
-    const [isGeneratingLink, setIsGeneratingLink] = useState(false)
-    const [payLink, setPayLink] = useState('')
+    // state managed internally by ShareSheet
     const [isSavingWishlist, setIsSavingWishlist] = useState(false)
 
     const { totalItems, totalPrice } = getCartTotals()
@@ -146,7 +141,7 @@ export default function CartPage() {
                                 <span>Checkout</span>
                             </button>
                             <button
-                                onClick={() => { setShowShare(true); setShareMode('menu') }}
+                                onClick={() => { setShowShare(true) }}
                                 className="flex-1 col-span-2 py-3 rounded-lg border border-[var(--ock-border)] text-[var(--ock-text-foreground)] hover:bg-[var(--ock-bg-alternate)]"
                             >
                                 Share Cart
