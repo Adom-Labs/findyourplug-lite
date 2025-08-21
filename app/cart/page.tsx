@@ -200,7 +200,7 @@ export default function CartPage() {
                         const res = await createGiftCheckout(address, { friendEmail: email, items, note })
                         toast.success('Items gifted to friend.')
                         if (res.link) { await navigator.clipboard.writeText(res.link) }
-                    } catch (e) {
+                    } catch {
                         toast.error('Failed to create gift checkout')
                     }
                 }}
@@ -212,13 +212,13 @@ export default function CartPage() {
                     url.searchParams.set('ids', ids)
                     return url.toString()
                 }}
-                onCreatePayLink={async (note) => {
+                onCreatePayLink={async () => {
                     const items = cartItems.map(i => ({ productId: i.id, quantity: i.quantity }))
                     try {
                         if (!address) { toast.error('Wallet address missing'); return '' }
                         const res = await createPayLink(address, { items })
                         return res.link || ''
-                    } catch (e) {
+                    } catch {
                         toast.error('Failed to create pay link')
                         return ''
                     }

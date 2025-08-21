@@ -9,6 +9,7 @@ import { SearchResult } from '../components/home/_components/types'
 import { useWalletDialog } from '@/app/components/layout/WalletProvider'
 import { ShareSheet } from '../components/shared/ShareSheet'
 import { DIGEMART_API_BASE, createWishlistShare } from '../components/home/_components/api'
+import { toast } from 'sonner';
 
 export default function WishlistPage() {
     const [activeTab, setActiveTab] = useState<'products' | 'stores'>('products')
@@ -246,7 +247,7 @@ export default function WishlistPage() {
                 selectableItems={products.map(p => ({ id: p.id, label: p.name, checked: !!selected[p.id] }))}
                 onToggleItem={(id, checked) => setSelected(prev => ({ ...prev, [id]: checked }))}
                 onRequireConnect={() => {
-                    try { const { toast } = require('sonner'); toast.info('Please connect your wallet to use this feature.') } catch {}
+                    toast.info('Please connect your wallet to use this feature.')
                 }}
                 onCreateCopyLink={async () => {
                     try {
@@ -254,7 +255,7 @@ export default function WishlistPage() {
                         const data = await createWishlistShare(address!, { productIds: ids.length ? ids : products.map(p => p.id) })
                         return data.link
                     } catch {
-                        try { const { toast } = require('sonner'); toast.error('Failed to create wishlist link') } catch {}
+                        toast.error('Failed to create wishlist link')
                         return ''
                     }
                 }}

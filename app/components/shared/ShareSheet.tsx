@@ -42,7 +42,6 @@ export function ShareSheet(props: ShareSheetProps) {
     onToggleItem,
     summary,
     copyNote,
-    payNote,
   } = props;
 
   const [mode, setMode] = useState<"menu" | "gift" | "payForm" | "linkProgress" | "linkReady">("menu");
